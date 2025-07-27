@@ -1,7 +1,13 @@
 from airflow import DAG
 from airflow.operators.bash import BashOperator
+from airflow.operators.python import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime
+
+
+def hello_world():
+    print("Hello World Airflow!!!")
+
 
 default_args = {
     'start_date': datetime(2025, 7, 26),
@@ -24,9 +30,15 @@ with DAG(
         bash_command='echo "Вторая задача выполнена!"'
     )
 
+    task_3 = PythonOperator(
+        task_id='python_operator',
+        python_callable=hello_world
+    )
+
+    # Запускаем второй DAG
     trigger_second_dag = TriggerDagRunOperator(
         task_id='trigger_second_dag',
         trigger_dag_id='second_dag',
     )
 
-    say_hello >> second_task >> trigger_second_dag
+    say_hello >> (second_task, task_3) >> trigger_second_dag
